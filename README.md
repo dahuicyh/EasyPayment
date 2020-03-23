@@ -6,9 +6,9 @@
 [![License](https://poser.pugx.org/zwxhenu/easy-payment/license)](https://packagist.org/packages/zwxhenu/easy-payment)
 
 ### 参考文档[支付文档]
-	<a href="https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=7_1">微信支付SDK</a>
-	<a href="https://opendocs.alipay.com/open/62/104743/">支付宝支付SDK</a>
-	<a href="https://b.baifubao.com/static/spcenter/fe-wallet-open-platform/entry/develop-document/#/document?mdUrl=5bd00a26557d0a2f834cd231">百度钱包SDK</a></p>
+	[微信支付SDK](https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=7_1)
+	[支付宝支付SDK](https://opendocs.alipay.com/open/62/104743/)
+	[百度钱包SDK](https://b.baifubao.com/static/spcenter/fe-wallet-open-platform/entry/develop-document/#/document?mdUrl=5bd00a26557d0a2f834cd231)
 
 # 环境要求
 - php版本:>=5.6
