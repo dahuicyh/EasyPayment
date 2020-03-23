@@ -8,27 +8,42 @@ use EasyPayment\payment\WxPayService;
 
 require './../vendor/autoload.php';
 /*********支付宝*************/
+
 $pay = new AlipayService();
-$pay->setPartner(''); // 合作商户
-$pay->setSellerId(''); // 合作商户ID
-$pay->setKey(''); // 合作商户支付秘钥
-$pay->setOrderSn('13354666');
-$pay->setPayMoney('0.01');
-$pay->setSubject('֧测试支付');
-$pay->setBody('֧测试支付');
-$pay->setSuccessUrl('http://www.baidu.com');
-$pay->setErrorUrl('http://auto.news18a.com');
-$pay->setTradeType(1);
+#-----公共参数配置------#
+$pay->setPartner(''); //合作商户
+$pay->setInputCharset('utf-8'); // 参数编码字符集 默认utf-8
+$pay->setSignType('MD5'); // 签名方式默认 MD5
+$pay->setNotifyUrl(''); // 服务器异步通知页面路径
+#-----公共参数配置结束-----#
+
+$pay->setSellerId(''); // 卖家支付宝用户号
+$pay->setOrderSn('13354666'); // 商户网站唯一订单号
+$pay->setPayMoney('0.01'); // 交易金额
+$pay->setSubject('֧测试支付'); //商品名称
+$pay->setBody('֧测试支付'); // 商品描述
+$pay->setReturnUrl('http://www.baidu.com'); // 页面跳转同步通知页面路径
+$pay->setTradeType(1); // 支付类型
 $res = $pay->directPay();
 
-
 /*******支付宝查询******/
-$query_pay = new AlipayService();
-$query_pay->setKey('');// 合作商户支付秘钥
-$query_pay->setSellerId('');// 合作商户ID
-$query_pay->setPartner('');// 合作商户
+$trade_no = '';
+$out_trade_no = '';
+$pay->setKey('');// 合作商户支付秘钥
+$pay->setSellerId('');// 合作商户ID
+$pay->setPartner('');// 合作商户
+$pay->setOutTradeNo('');// 支付宝交易流水号
+$pay->setOrderSn('');// 商户网站订单系统中唯一订单号
 // $trade_no 支付宝交易流水号 $out_trade_no 商户网站订单系统中唯一订单号，必填
-$query_res = $query_pay->queryOrder($trade_no, $out_trade_no);
+$query_res = $pay->queryOrder();
+
+/*******支付宝即时退款*****/
+$pay->setSellerEmail('');// 卖家支付宝账号
+$pay->setSellerId('');// 卖家用户ID
+$pay->setBatchOn('');// 退款批次号 格式为：退款日期（8位）+流水号（3～24位）。
+$pay->setBatchNum(1);// 总笔数 最大支持1000笔
+$pay->setDetailData(''); // 单笔数据集 例如：2014040311001004370000361525^5.00^协商退款
+$refund_res = $pay->fastPayRefundByPlatformPwd();
 
 
 /**************百度钱包************/
@@ -85,33 +100,32 @@ $out_trade_no_res = $bd_query_refund_pay->queryRefundBySpRefundOn();
  * KEY：商户支付密钥，参考开户邮件设置（必须配置）
  * APPSECRET：公众帐号secert（仅JSAPI支付的时候需要配置）
  **/
-$wx_qrcode_pay = new WxPayService();
+$wx_pay = new WxPayService();
+#--------公共配置--------#
 // 商户号（必须配置）
-$wx_qrcode_pay->setMchId('');
+$wx_pay->setMchId('');
 // 公众帐号secert（仅JSAPI支付的时候需要配置）
-$wx_qrcode_pay->setAppSecret('');
+$wx_pay->setAppSecret('');
 // 绑定支付的APPID
-$wx_qrcode_pay->setAppId('');
+$wx_pay->setAppId('');
 // KEY：商户支付密钥，参考开户邮件设置（必须配置）
-$wx_qrcode_pay->setKey('');
-$wx_qrcode_pay->setOrderSn('12345689');
-$wx_qrcode_pay->setOutOrderNo('4567891');
-$wx_qrcode_pay->setPayMoney(0.01);
-$wx_qrcode_pay->setSubject('测试二维码支付');
-$wx_qrcode_pay->setBody('测试二维码支付');
-$wx_qrcode_pay->setSuccessUrl('http://www.baidu.com');
-$wx_qrcode_pay->setErrorUrl('http://www.baidu.com');
-$wx_qrcode_pay->setTradeType(1);
-$res = $wx_qrcode_pay->nativePay();
+$wx_pay->setKey('');
+#--------公共配置结束--------#
+
+$wx_pay->setOrderSn('12345689');
+$wx_pay->setOutOrderNo('4567891');
+$wx_pay->setPayMoney(0.01);
+$wx_pay->setSubject('测试二维码支付');
+$wx_pay->setBody('测试二维码支付');
+$wx_pay->setSuccessUrl('http://www.baidu.com');
+$wx_pay->setErrorUrl('http://www.baidu.com');
+$wx_pay->setTradeType(1);
+$res = $wx_pay->nativePay();
 $qrcode = $res['data'];
 echo $_SERVER['HTTP_HOST'].'/'.$qrcode;
 
 /**************微信支付************/
-$wx_pay = new WxPayService();
-$wx_pay->setMchId('');
-$wx_pay->setAppSecret('');
-$wx_pay->setAppId('');
-$wx_pay->setKey('');
+
 $wx_pay->setIsWap(true);
 $wx_pay->setOrderSn('123456789');
 $wx_pay->setPayMoney(0.01);
@@ -120,14 +134,29 @@ $wx_pay->setBody('测试微信支付');
 $wx_pay->setSuccessUrl('http://www.baidu.com');
 $wx_pay->setErrorUrl('http://www.baidu.com');
 $res = $wx_pay->jsAPIPay('454645'); // 微信的openid
-var_dump($res);exit;
 
 /*************微信支付查询*************/
 
-$wx_pay_query = new WxPayService();
-$wx_pay_query->setMchId('');
-$wx_pay_query->setAppSecret('');
-$wx_pay_query->setAppId('');
-$wx_pay_query->setKey('');
-// $trade_no 微信交易流水号 $out_trade_no 商户网站订单系统中唯一订单号，必填
-$wx_pay_query_res = $wx_pay_query->queryOrder($trade_no, $out_trade_no);
+$wx_pay->setWxOrderId(''); //微信交易流水号
+$wx_pay->setOutOrderNo(''); // 商户网站订单系统中唯一订单号，必填
+$wx_pay_query_res = $wx_pay->queryOrder();
+
+/*******微信支付退款***/
+$wx_pay->setWxOrderId(''); //微信交易流水号
+$wx_pay->setOutOrderNo(''); // 商户网站订单系统中唯一订单号，必填
+$wx_pay->setOutRefundNo(''); // 商户定义的退款订单编号
+$wx_pay->setTotalFee(); // 标价金额
+$wx_pay->setRefundFee(); // 退款金额
+$wx_pay->setRefundDesc(); // 退款原因
+$wx_pay->setRefundAccount(); // 退款资金来源
+$wx_pay->setNotifyUrl(); // 退款结果通知url
+$wx_pay->refund();
+
+/*********微信退款结果查询*******/
+
+$wx_pay->setWxOrderId(''); //微信交易流水号
+$wx_pay->setOutOrderNo(''); // 商户网站订单系统中唯一订单号，必填
+$wx_pay->setOutRefundNo(''); // 商户定义的退款订单编号
+$wx_pay->setRefundId(''); // 微信退款订单号
+###以上四选一就可以查询####
+$wx_pay->refundQuery();

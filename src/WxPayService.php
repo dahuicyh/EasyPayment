@@ -35,13 +35,77 @@ class WxPayService implements PayContract
     private $mch_id = '';
     private $key = '';
     private $app_id = '';
+    /**
+     * 设置商户系统内部的订单号,transaction_id、out_trade_no二选一，如果同时存在优先级：transaction_id>out_trade_no
+     *
+     * @var string
+     */
     private $out_trade_no = '';
+    /**
+     * 退款商户订单号，商户申请退款自动生成的订单号
+     *
+     * @var string
+     */
+    private $out_refund_no = '';
     private $pay_common_obj = null;
-
+    /**
+     * 微信支付返回的支付单号
+     *
+     * @var string
+     */
+    private $wx_order_id = '';
+    /**
+     * 退款货币类型 默认CNY
+     *
+     * @var string
+     */
+    private $refund_fee_type = 'CNY';
+    /**
+     * 标价金额
+     *
+     * @var string
+     */
+    private $total_fee = '';
+    /**
+     * 退款金额
+     *
+     * @var string
+     */
+    private $refund_fee = '';
+    /**
+     * 退款原因
+     *
+     * @var string
+     */
+    private $refund_desc = '';
+    /**
+     * 退款资金来源
+     * @var string
+     */
+    private $refund_account = '';
+    /**
+     * 退款结果通知url
+     *
+     * @var string
+     */
+    private $notify_url = '';
+    /**
+     * 微信退款单号
+     *
+     * @var string
+     */
+    private $refund_id = '';
+    /**
+     * 偏移量，当部分退款次数超过10次时可使用，表示返回的查询结果从这个偏移量开始取记录
+     *
+     * @var string
+     */
+    private $refund_offset = '';
     public function __construct()
     {
         $this->pay_common_obj = new PayCommon();
     }
+
     /**
      * 是否为WAP支付
      *
@@ -218,6 +282,135 @@ class WxPayService implements PayContract
         $this->out_trade_no = $out_trade_no;
         return $this;
     }
+
+    /**
+     * 设置商户退款生成唯一退款订单号
+     *
+     * @param $out_refund_no
+     *
+     * @return $this
+     */
+    public function setOutRefundNo($out_refund_no)
+    {
+        $this->out_refund_no = $out_refund_no;
+        return $this;
+    }
+
+    /**
+     * 微信支付返回的支付单号
+     *
+     * @param $wx_order_id
+     *
+     * @return $this
+     */
+    public function setWxOrderId($wx_order_id)
+    {
+        $this->wx_order_id = $wx_order_id;
+        return $this;
+    }
+
+    /**
+     * 商户退款币种
+     *
+     * @param $refund_fee_type
+     * @return $this
+     */
+    public function setRefundFeeType($refund_fee_type)
+    {
+        $this->refund_fee_type = $refund_fee_type;
+        return $this;
+    }
+
+    /**
+     * 设置标价金额 只能为整数 单位为分
+     *
+     * @param $total_fee
+     *
+     * @return $this
+     */
+    public function setTotalFee($total_fee)
+    {
+        $this->total_fee = $total_fee;
+        return $this;
+    }
+
+    /**
+     * 设置退款金额
+     *
+     * @param $refund_fee
+     *
+     * @return $this
+     */
+    public function setRefundFee($refund_fee)
+    {
+        $this->refund_fee = $refund_fee;
+        return $this;
+    }
+
+    /**
+     * 退款原因
+     *
+     * @param $refund_desc
+     *
+     * @return $this
+     */
+    public function setRefundDesc($refund_desc)
+    {
+        $this->refund_desc = $refund_desc;
+        return $this;
+    }
+
+    /**
+     * 退款资金来源
+     *
+     * @param $refund_account
+     *
+     * @return $this
+     */
+    public function setRefundAccount($refund_account)
+    {
+        $this->refund_account = $refund_account;
+        return $this;
+    }
+
+    /**
+     * 设置退款结果通知
+     *
+     * @param $notify_url
+     *
+     * @return $this
+     */
+    public function setNotifyUrl($notify_url)
+    {
+        $this->notify_url = $notify_url;
+        return $this;
+    }
+
+    /**
+     * 微信退款单号
+     *
+     * @param $refund_id
+     *
+     * @return $this
+     */
+    public function setRefundId($refund_id)
+    {
+        $this->refund_id = $refund_id;
+        return $this;
+    }
+
+    /**
+     * 设置微信退款查询偏移量
+     * 当部分退款次数超过10次时可使用，表示返回的查询结果从这个偏移量开始取记录
+     * @param $refund_offset
+     *
+     * @return $this
+     */
+    public function setRefundOffset($refund_offset)
+    {
+        $this->refund_offset = $refund_offset;
+        return $this;
+    }
     /**
      * 获取openid
      *
@@ -342,11 +535,9 @@ class WxPayService implements PayContract
     /**
      * 查询订单支付状态
      *
-     * @param string $trade_no
-     * @param string $out_trade_no
      * @return array
      */
-    public function queryOrder($trade_no = '', $out_trade_no = '')
+    public function queryOrder()
     {
         WxPayConfig::$APPID = $this->app_id;
         WxPayConfig::$KEY = $this->key;
@@ -354,10 +545,10 @@ class WxPayService implements PayContract
         WxPayConfig::$APPSECRET = $this->app_secret;
         $input = new WxPayOrderQuery();
         if (!empty($trade_no)) {
-            $input->SetTransaction_id($trade_no);
+            $input->SetTransaction_id($this->trade_no);
         }
         if (!empty($out_trade_no)) {
-            $input->SetOut_trade_no($out_trade_no);
+            $input->SetOut_trade_no($this->out_trade_no);
         }
         $trade_info = WxPayApi::orderQuery($input, 60);
         $data['trade_info'] = $trade_info;
@@ -379,12 +570,9 @@ class WxPayService implements PayContract
     /**
      * 退款方法
      *
-     * @param string $wx_order_id
-     * @param string $out_trade_no
-     * @param string $out_refund_no
      * @return array
      */
-    public function refund($wx_order_id, $out_trade_no, $out_refund_no)
+    public function refund()
     {
        // 加载配置文件
         WxPayConfig::$APPID = $this->app_id;
@@ -397,28 +585,25 @@ class WxPayService implements PayContract
         $input->SetAppid($this->app_id);
         $input->SetMch_id($this->mch_id);
         $input->SetNonce_str($nonce_str);
-        $input->SetTransaction_id($wx_order_id);
-        $input->SetOut_trade_no($out_trade_no);
-        $input->SetOut_refund_no($out_refund_no);
-        $input->SetTotal_fee($total_fee);
-        $input->SetRefund_fee($refund_fee);
-        $input->SetRefund_fee_type('CNY');
-        $input->setRefundDesc('');
-        $input->setRefundAccount('');
+        $input->SetTransaction_id($this->wx_order_id);
+        $input->SetOut_trade_no($this->out_trade_no);
+        $input->SetOut_refund_no($this->out_refund_no);
+        $input->SetTotal_fee($this->total_fee);
+        $input->SetRefund_fee($this->refund_fee);
+        $input->SetRefund_fee_type($this->refund_fee_type);
+        $input->setRefundDesc($this->refund_desc);
+        $input->setRefundAccount($this->refund_account);
         $input->setNotifyUrl(WxPayConfig::NOTIFY_URL);
-        $result = $WxPayApi::refund($input);
+        $result = WxPayApi::refund($input);
         return $this->pay_common_obj->alertInfo(0, '', $result);
     }
 
     /**
      * 查询退款方法
      *
-     * @param string $wx_order_id
-     * @param string $out_trade_no
-     * @param string $out_refund_no
      * @return array
      */
-    public function refundQuery($wx_order_id, $out_trade_no, $out_refund_no)
+    public function refundQuery()
     {
        // 加载配置文件
         WxPayConfig::$APPID = $this->app_id;
@@ -431,10 +616,10 @@ class WxPayService implements PayContract
         $input->SetAppid($this->app_id);
         $input->SetMch_id($this->mch_id);
         $input->SetNonce_str($nonce_str);
-        $input->SetTransaction_id($wx_order_id);
-        $input->SetOut_trade_no($out_trade_no);
-        $input->SetOut_refund_no($out_refund_no);
-        $result = $WxPayApi::refundQuery($input);
+        $input->SetTransaction_id($this->wx_order_id);
+        $input->SetOut_trade_no($this->out_trade_no);
+        $input->SetOut_refund_no($this->out_refund_no);
+        $result = WxPayApi::refundQuery($input);
         return $this->pay_common_obj->alertInfo(0, '', $result);
     }
     /**

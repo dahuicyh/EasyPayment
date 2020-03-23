@@ -176,8 +176,8 @@ class WxPayRefund extends WxPayDataBase
     }
 
     /**
-     * 设置商户系统内部的订单号,transaction_id、out_trade_no二选一，如果同时存在优先级：transaction_id>
-     * out_trade_no
+     * 设置商户系统内部的订单号,transaction_id、out_trade_no二选一，如果同时存在优先级：transaction_id>out_trade_no
+     *
      *
      * @param string $value
      *
